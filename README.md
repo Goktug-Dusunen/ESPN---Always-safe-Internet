@@ -10,10 +10,10 @@ git clone https://github.com/Goktug-Dusunen/ESPN---Always-safe-Internet
 
 # ➤ BEFORE THE USING TOOLS
 ```
-TR : Araçlarımızın Özelliklerini Kullanmadan Önce Paketlerin Kurulumu Yapılması Gerekir
-Paketlerin Kurulumu İçin ;
+TR : Araçlarımızın Özelliklerini Kullanmadan Önce Paketlerin Kurulumu Yapılması Gerekir.
 
-EN : Before The Using Our Repositries The Packets Must Be Installed For Install Packets ;
+EN : Packages must be installed before using the features of our tools.
+
 
 ```
 # ➤ :heavy_exclamation_mark: TESTED ON
