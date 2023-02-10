@@ -7,7 +7,7 @@ import hashlib
 import hmac
 import os
 import base64
-
+#granitlio
 def loading_animation():
     spinners = ['|', '/', '-', '\\']
     for i in range(50):
@@ -35,8 +35,7 @@ def create_tunnel(sock, secret_key):
 
 
 def authenticate(username, password):
-    # Your authentication logic here
-    # Example:
+
     if username == "admin" and password == "password":
         return True
     else:
