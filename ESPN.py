@@ -7,7 +7,20 @@ import hashlib
 import hmac
 import os
 #ats
-os.system("loa.sh")
+
+import time
+import sys
+
+def loading_animation():
+    spinners = ['|', '/', '-', '\\']
+    for i in range(50):
+        for spinner in spinners:
+            os.system('figlet ESPN')
+            sys.stdout.write(f"\r{spinner} Loading... ")
+            sys.stdout.flush()
+            time.sleep(0.1)
+
+loading_animation()
 def create_tunnel(server_ip, server_port, secret_key):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
