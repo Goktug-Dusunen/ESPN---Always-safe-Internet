@@ -6,8 +6,7 @@ import tensorflow as tf
 import hashlib
 import hmac
 import os
-#ats
-
+import base64
 import time
 import sys
 
@@ -20,23 +19,19 @@ def loading_animation():
             sys.stdout.flush()
             time.sleep(0.1)
 
-loading_animation()
 def create_tunnel(server_ip, server_port, secret_key):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     server_address = (server_ip, server_port)
     sock.connect(server_address)
 
 
+    encrypted_secret_key = base64.b64encode(secret_key.encode('utf-8'))
+
     nonce = struct.pack("!Q", np.random.randint(0, 2**64-1))
-
-
-    signature = hmac.new(secret_key.encode('utf-8'), nonce, hashlib.sha256).digest()
-
+    signature = hmac.new(encrypted_secret_key, nonce, hashlib.sha256).digest()
 
     message = nonce + signature
     sock.sendall(struct.pack("!Q", len(message)) + message)
-
 
     response_length = struct.unpack("!Q", sock.recv(8))[0]
     response = sock.recv(response_length)
@@ -45,26 +40,35 @@ def create_tunnel(server_ip, server_port, secret_key):
     else:
         print("Failed to create the tunnel.")
 
-
     sock.close()
 
-def analyze_network_data(data):
+def authenticate(username, password):
 
+    if username == "admin" and password == "password":
+        return True
+    else:
+        return False
+
+def analyze_network_data(data):
     model = tf.keras.models.load_model("model.h5")
     prediction = model.predict(np.array(data))
-
-
     return prediction
 
-# Example usage
-server_ip = "127.0.0.1"
-server_port = 8080
-secret_key = "secret-key"
+if __name__ == "__main__":
+    loading_animation()
 
+    server_ip = "127.0.0.1"
+    server_port = 8080
+    secret_key = "secret-key"
+    username = input("Enter username:")
+    password = input("Enter password:")
 
-create_tunnel(server_ip, server_port, secret_key)
+    if not authenticate(username, password):
+        print("Authentication failed.")
+        sys.exit(0)
 
+    create_tunnel(server_ip, server_port, secret_key)
 
-data = [1, 2, 3, 4, 5]
-result = analyze_network_data(data)
-print("Analysis result:", result)
+    data = [1, 2, 3, 4, 5]
+    result = analyze_network_data(data)
+    print("Analysis result:", result)
