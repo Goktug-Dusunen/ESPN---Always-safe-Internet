@@ -1,82 +1,87 @@
 import socket
-import struct
-import sys
+import ssl
 import numpy as np
 import tensorflow as tf
-import hashlib
-import hmac
-import os
-import base64
-#granitlio
-def loading_animation():
-    spinners = ['|', '/', '-', '\\']
-    for i in range(50):
-        for spinner in spinners:
-            os.system('figlet ESPN')
-            sys.stdout.write(f"\r{spinner} Loading... ")
-            sys.stdout.flush()
-            time.sleep(0.1)
+#grantilio
+def start_server():
 
-def create_tunnel(sock, secret_key):
-    nonce = struct.pack("!Q", np.random.randint(0, 2**64-1))
-    encrypted_secret_key = base64.b64encode(secret_key.encode('utf-8'))
-
-    signature = hmac.new(encrypted_secret_key, nonce, hashlib.sha256).digest()
-    message = nonce + signature
-
-    sock.sendall(struct.pack("!Q", len(message)) + message)
-
-    response_length = struct.unpack("!Q", sock.recv(8))[0]
-    response = sock.recv(response_length)
-    if response == b'OK':
-        print("Tunnel created successfully!")
-    else:
-        print("Failed to create the tunnel.")
+    encryption_model = tf.keras.models.load_model('encryption_model.h5')
+    attack_detection_model = tf.keras.models.load_model('attack_detection_model.h5')
 
 
-def authenticate(username, password):
-
-    if username == "admin" and password == "password":
-        return True
-    else:
-        return False
-
-def analyze_network_data(data):
-    model = tf.keras.models.load_model("model.h5")
-    prediction = model.predict(np.array(data))
-    return prediction
+    key = generate_key(encryption_model)
 
 
-def handle_client_connection(sock, client_address, secret_key):
-    try:
-        print("Accepted connection from", client_address)
-
-        username = sock.recv(1024).decode('utf-8')
-        password = sock.recv(1024).decode('utf-8')
-        if not authenticate(username, password):
-            print("Authentication failed.")
-            sys.exit(0)
-
-        create_tunnel(sock, secret_key)
-
-        data_length = struct.unpack("!Q", sock.recv(8))[0]
-        data = sock.recv(data_length)
-
-        result = analyze_network_data(data)
-        sock.sendall(result)
-
-    finally:
-        sock.close()
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-def start_server(server_ip, server_port, secret_key):
-    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_sock.bind((server_ip, server_port))
-    server_sock.listen(1)
+    server_address = ('localhost', 12345)
+    server_socket.bind(server_address)
 
-    print("Server is listening on", (server_ip, server_port))
+
+    server_socket.listen(1)
+
+    print('Waiting for a client to connect...')
+    client_socket, client_address = server_socket.accept()
+    print('Accepted connection from', client_address)
+
+
+    context = ssl.create_default_context()
+    secured_socket = context.wrap_socket(client_socket, server_side=True)
 
     while True:
-        print("Waiting for a connection...")
-        client_sock, client_address = server_sock.accept()
-        handle_client_connection
+
+        encrypted_data = secured_socket.recv(1024)
+
+
+        data = decrypt_data(encrypted_data, key)
+        print('Received data from client:', data.decode())
+
+
+        is_attack = detect_attack(data, attack_detection_model)
+        if is_attack:
+            print('Detected an attack! Closing the connection.')
+            break
+
+
+        message = 'Hello, client!'
+        encrypted_data = encrypt_data(message.encode(), key)
+
+
+        secured_socket.sendall(encrypted_data)
+
+
+    secured_socket.close()
+    client_socket.close()
+    server_socket.close()
+
+def generate_key(model):
+
+    input_data = np.random.rand(1, 100)
+
+
+    key = model.predict(input_data)
+
+    return key
+
+def encrypt_data(data, key):
+
+    encrypted_data = np.bitwise_xor(data, key)
+
+    return encrypted_data
+
+def decrypt_data(encrypted_data, key):
+
+    data = np.bitwise_xor(encrypted_data, key)
+
+    return data
+
+def detect_attack(data, model):
+
+    input_data = np.array(data).reshape(1, -1)
+    prediction = model.predict(input_data)
+
+    return True if prediction[0][0] >= 0.5 else False
+
+if __name__ == '__main__':
+    start_server()
